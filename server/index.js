@@ -10,15 +10,26 @@ import { redis } from "./redis.js";
 console.log("[START] index.js - start");
 
 // === Firebase Admin init ===
+// Локально: читаем из serviceAccountKey.json
+// На Render: читаем из переменных окружения
 let serviceAccount;
-try {
-  serviceAccount = JSON.parse(
-    readFileSync(new URL("./serviceAccountKey.json", import.meta.url))
-  );
-  console.log("[START] serviceAccountKey.json read, project:", serviceAccount.project_id);
-} catch (e) {
-  console.error("[START] Cannot read serviceAccountKey.json:", e.message);
-  process.exit(1);
+if (process.env.FIREBASE_PROJECT_ID) {
+  serviceAccount = {
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+  };
+  console.log("[START] Firebase creds from ENV, project:", serviceAccount.projectId);
+} else {
+  try {
+    serviceAccount = JSON.parse(
+      readFileSync(new URL("./serviceAccountKey.json", import.meta.url))
+    );
+    console.log("[START] serviceAccountKey.json read, project:", serviceAccount.project_id);
+  } catch (e) {
+    console.error("[START] Cannot read serviceAccountKey.json:", e.message);
+    process.exit(1);
+  }
 }
 
 try {
