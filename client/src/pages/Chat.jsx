@@ -228,6 +228,7 @@ export default function Chat({ user }) {
             value={text}
             onChange={(e) => setText(e.target.value)}
             disabled={sending}
+            maxLength={10}
             autoFocus
           />
           <button type="submit" disabled={!text.trim() || sending}>
