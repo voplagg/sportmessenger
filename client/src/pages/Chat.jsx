@@ -7,6 +7,7 @@ import {
   addDoc,
   serverTimestamp,
   where,
+  limit,
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { db, auth } from "../firebase";
@@ -35,7 +36,8 @@ export default function Chat({ user }) {
     const q = query(
       collection(db, "messages"),
       where("channel", "==", channel),
-      orderBy("createdAt", "asc")
+      orderBy("createdAt", "desc"),
+      limit(50) 
     );
 
     const unsub = onSnapshot(q, (snapshot) => {
