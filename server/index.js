@@ -55,24 +55,26 @@ app.use(express.json());
 console.log("[START] Express configured");
 
 // === Middleware: Firebase ID token check ===
+const isDebug = process.env.NODE_ENV !== "production";
+
 async function authMiddleware(req, res, next) {
   try {
     const authHeader = req.headers.authorization || "";
-    console.log("[auth] Called:", req.method, req.path);
+    if (isDebug) console.log("[auth] Called:", req.method, req.path);
 
     const token = authHeader.startsWith("Bearer ")
       ? authHeader.slice(7)
       : null;
 
     if (!token) {
-      console.log("[auth] No token");
+      if (isDebug) console.log("[auth] No token");
       return res.status(401).json({ error: "No token provided" });
     }
 
-    console.log("[auth] Token length:", token.length);
+    if (isDebug) console.log("[auth] Token length:", token.length);
 
     const decoded = await getAuth().verifyIdToken(token);
-    console.log("[auth] Token OK, uid:", decoded.uid);
+    if (isDebug) console.log("[auth] Token OK, uid:", decoded.uid);
     req.user = decoded;
     next();
   } catch (err) {
