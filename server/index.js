@@ -127,11 +127,17 @@ app.get("/api/presence/online", authMiddleware, async (req, res) => {
       return res.json({ users: [], count: 0 });
     }
 
-    const values = await redis.mget(...keys);
-    const users = values
-      .filter(Boolean)
-      .map((v) => JSON.parse(v))
-      .sort((a, b) => b.lastSeen - a.lastSeen);
+        const values = await redis.mget(...keys);
+    const users = [];
+    for (const v of values) {
+      if (!v) continue;
+      try {
+        users.push(JSON.parse(v));
+      } catch (parseErr) {
+        console.warn("Skipping corrupted presence record:", parseErr.message);
+      }
+    }
+    users.sort((a, b) => b.lastSeen - a.lastSeen);
 
     res.json({ users, count: users.length });
   } catch (err) {
