@@ -1,43 +1,43 @@
-# Узкие места проекта Sport Messenger
+# Sport Messenger projekti kitsad kohad
 
-## 1. Чат грузит все сообщения сразу
+## 1. Vestlus laeb kõik sõnumid korraga
 
-**Файл:** `client/src/pages/Chat.jsx`
-**Проблема:** В Firestore-запросе нет `limit()`. Если в канале 10 000 сообщений — все они загрузятся в браузер, приложение начнёт тормозить.
-**Решение:** Добавить `limit(50)` и изменить сортировку на `desc`, чтобы грузились последние 50 сообщений. После получения — `.reverse()`, чтобы отображались в правильном порядке.
+**Fail:** `client/src/pages/Chat.jsx`
+**Probleem:** Firestore päringus puudub `limit()`. Kui kanalis on 10 000 sõnumit, laetakse need kõik brauserisse ja rakendus muutub aeglaseks.
+**Lahendus:** Lisasin `limit(50)` ja muutsin sorteerimise `desc`-ks, et laetaks viimased 50 sõnumit. Pärast laadimist kasutan `.reverse()`, et kuvada õiges järjekorras.
 
-## 2. `JSON.parse` без обработки ошибок
+## 2. `JSON.parse` ilma vigade käsitlemiseta
 
-**Файл:** `server/index.js` (эндпоинт `GET /api/presence/online`)
-**Проблема:** `.map((v) => JSON.parse(v))` — если хоть одна запись в Redis повреждена, весь эндпоинт падает с ошибкой 500. Пользователи не видят список онлайн.
-**Решение:** Заменить `.map()` на цикл `for` с `try/catch` вокруг каждого `JSON.parse`. Битые записи пропускаются, остальные грузятся нормально.
+**Fail:** `server/index.js` (endpoint `GET /api/presence/online`)
+**Probleem:** `.map((v) => JSON.parse(v))` — kui üks kirje Redis'es on rikkis, kukub kogu endpoint 500 veaga. Kasutajad ei näe online-nimekirja.
+**Lahendus:** Asendasin `.map()` tsükliga `for` ja lisasin iga `JSON.parse` ümber `try/catch`. Rikkis kirjed jäetakse vahele, ülejäänud laetakse korrektselt.
 
-## 3. Чувствительные `console.log` в продакшене
+## 3. Tundlikud `console.log`-id produktsioonis
 
-**Файл:** `server/index.js` (`authMiddleware`)
-**Проблема:** Логи с `uid`, методом, путём и длиной токена видны в панели Render. Это потенциальная информация для атакующего и засорение логов.
-**Решение:** Ввести флаг `isDebug = process.env.NODE_ENV !== "production"` и обернуть все `console.log` с чувствительными данными в `if (isDebug)`. `console.error` в `catch` оставлен — ошибки логируются всегда.
+**Fail:** `server/index.js` (`authMiddleware`)
+**Probleem:** Logid, mis sisaldavad `uid`-d, meetodit, teed ja tokeni pikkust, on nähtavad Renderi paneelis. See on potentsiaalne info ründajale ja logide reostamine.
+**Lahendus:** Lisasin lipu `isDebug = process.env.NODE_ENV !== "production"` ja panin kõik tundlikud `console.log`-id `if (isDebug)` sisse. `console.error` plokis `catch` jäi alles — vead logitakse alati.
 
-## 4. Логи ошибок Redis засоряют вывод
+## 4. Redis'i vealogid reostavad väljundit
 
-**Файл:** `server/redis.js`
-**Проблема:** Каждая ошибка Redis (например, при переподключении) пишется в `console.error` с полным стеком. За минуту может набежать сотни строк.
-**Решение:** Ввести счётчик `redisErrorCount`. Первые 3 ошибки — логируются полностью, дальше — каждая 50-я, кратко. При длительном сбое вместо 1000 строк в логах ~10.
+**Fail:** `server/redis.js`
+**Probleem:** Iga Redis'i viga (näiteks ühenduse taastamisel) kirjutatakse `console.error`-iga koos täieliku stack-iga. Minutiga võib koguneda sadu ridu.
+**Lahendus:** Lisasin loenduri `redisErrorCount`. Esimesed 3 viga logitakse täielikult, edasi iga 50. viga lühidalt. Pikaajalise tõrke korral on 1000 rea asemel logides ~10.
 
-## 5. Нет ограничения длины сообщения
+## 5. Sõnumi pikkusele pole piirangut
 
-**Файл:** `client/src/pages/Chat.jsx`
-**Проблема:** В поле ввода нет `maxLength`. Можно отправить сообщение на несколько МБ, что бьёт по Firestore (тарифицируется по объёму) и замедляет загрузку у всех.
-**Решение:** Добавить `maxLength={1000}` в `<input>`.
+**Fail:** `client/src/pages/Chat.jsx`
+**Probleem:** Sisendväljal puudub `maxLength`. Saata võib mitme MB suuruse sõnumi, mis koormab Firestore'i (tasustatakse mahu järgi) ja aeglustab laadimist kõigile.
+**Lahendus:** Lisasin `<input>`-ile `maxLength={1000}`.
 
 ---
 
-## Сводка
+## Kokkuvõte
 
-| № | Проблема | Файл | Коммит |
+| Nr | Probleem | Fail | Commit |
 |---|---|---|---|
-| 1 | Пагинация | `client/src/pages/Chat.jsx` | `limit(50)` в query |
-| 2 | JSON.parse | `server/index.js` | `try/catch` в цикле |
-| 3 | Логи в проде | `server/index.js` | `isDebug` флаг |
-| 4 | Логи Redis | `server/redis.js` | Счётчик ошибок |
-| 5 | Длина сообщения | `client/src/pages/Chat.jsx` | `maxLength={1000}` |
+| 1 | Lehekülgede kaupa laadimine | `client/src/pages/Chat.jsx` | `limit(50)` päringus |
+| 2 | JSON.parse | `server/index.js` | `try/catch` tsüklis |
+| 3 | Logid produktsioonis | `server/index.js` | `isDebug` lipp |
+| 4 | Redis'i logid | `server/redis.js` | Vigade loendur |
+| 5 | Sõnumi pikkus | `client/src/pages/Chat.jsx` | `maxLength={1000}` |
